@@ -18,6 +18,30 @@
 	<script src="https://cdn.firebase.com/libs/firebaseui/2.5.1/firebaseui.js"></script>
 	<link type="text/css" rel="stylesheet" href="https://cdn.firebase.com/libs/firebaseui/2.5.1/firebaseui.css" />
     <script type="text/javascript">
+      var getWelcomeMessage = function(accessToken, onwelcomemessage)
+      {
+   	    var xmlhttp = new XMLHttpRequest();
+
+   	    xmlhttp.onreadystatechange = function() {
+   	        if (xmlhttp.readyState == XMLHttpRequest.DONE) {   // XMLHttpRequest.DONE == 4
+   	           if (xmlhttp.status == 200) {
+   	               response = JSON.parse(xmlhttp.responseText);
+   	               onwelcomemessage(response.message || "no message");
+   	           }
+   	           else {
+   	        	   onwelcomemessage(xmlhttp.statusText || "Error " + xmlhttp.status);
+   	           }
+   	        }
+   	    };
+
+   	    xmlhttp.open("GET", "/api/welcomemessage", true);
+   	    if (accessToken)
+   	    {
+   	 		xmlhttp.setRequestHeader("accesstoken", accessToken)
+   	    };
+   		xmlhttp.send();
+      } 
+      
       // FirebaseUI config.
       var uiConfig = {
         signInSuccessUrl: '/',
@@ -50,7 +74,12 @@
             var phoneNumber = user.phoneNumber;
             var providerData = user.providerData;
             user.getIdToken().then(function(accessToken) {
-              document.getElementById('sign-in-status').textContent = 'Hi ' + user.displayName + ", welcome to Truly Authul!";
+              document.getElementById('sign-in-status').textContent = "loading...";
+              getWelcomeMessage(accessToken, function(message)
+                {
+                  document.getElementById('sign-in-status').textContent = message;
+                }
+              );
               document.getElementById('sign-out').style.display = 'block';
               document.getElementById('firebaseui-auth-container').style.display = 'none';
               document.getElementById('sign-out').textContent = 'Sign out';
@@ -71,7 +100,12 @@
             });
           } else {
             // User is signed out.
-            document.getElementById('sign-in-status').textContent = 'Hello there! Please sign in to access Truly Authul';
+            document.getElementById('sign-in-status').textContent = "loading...";
+            getWelcomeMessage(null, function(message)
+              {
+                document.getElementById('sign-in-status').textContent = message;
+              }
+            );
             document.getElementById('sign-out').style.display = 'none';
             document.getElementById('firebaseui-auth-container').style.display = 'block';
             ui.start('#firebaseui-auth-container', uiConfig);
